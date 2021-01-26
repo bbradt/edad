@@ -17,6 +17,7 @@ class EdadNet(DistNet):
             agg_delta = []
             agg_input_activations = []
             agg_output_activations = []
+            dact = self.get_dact(seed_module)
             for n_i, network in enumerate(self.networks):
                 module = self.network_module_map[n_i][seed_mname]
                 module_delta = network.hook.backward_stats[seed_mname]["output"][0]
@@ -26,6 +27,9 @@ class EdadNet(DistNet):
                 module_output_activations = network.hook.forward_stats[seed_mname][
                     "output"
                 ][0]
+
+                # true_delta = module_delta / module_dacts
+                # if m_i == 0:
                 agg_delta.append(module_delta)
                 agg_input_activations.append(module_input_activations)
                 agg_output_activations.append(module_output_activations)
@@ -38,8 +42,18 @@ class EdadNet(DistNet):
             agg_grad = agg_delta.t() @ agg_input_activations
             for n_i, network in enumerate(self.networks):
                 module = self.network_module_map[n_i][seed_mname]
-                weight = module.weight
-                new_delta = (weight.t() @ (agg_delta * agg_output_activations).t()).t()
+                weight = None
+                new_delta = agg_delta
+                if hasattr(module, "weight"):
+                    weight = module.weight
+                    if m_i == 0:
+                        new_delta = (weight.t() @ (agg_delta).t()).t()
+                    else:
+                        agg_dacts = dact(agg_output_activations)
+                        new_delta = weight.t() @ (agg_delta * agg_dacts).t()
+                else:
+                    agg_dacts = dact(agg_input_activations)
+                    new_delta = agg_delta * agg_dacts
                 next_mname = self.get_backward_module(seed_mname)
                 if next_mname and next_mname in network.hook.backward_stats.keys():
                     network.hook.backward_stats[next_mname]["output"][0] = new_delta

@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from dadnet.hooks.model_hook import ModelHook
 from dadnet.utils import n_bits
@@ -30,6 +31,34 @@ class DistNet:
                 if i == 0:
                     orders.append(mname)
         return result, orders
+
+    def get_dact(self, module):
+        mname = module.__class__.__name__
+
+        def _d_relu(x):
+            dr = torch.where(
+                x > 0, torch.ones_like(x).to(x.device), torch.zeros_like(x).to(x.device)
+            )
+            return dr.to(x.device)
+
+        def _d_sigmoid(x):
+            s = nn.functional.sigmoid(x)
+            return s * (1 - s)
+
+        def _d_tanh(x):
+            t = nn.functional.tanh(x)
+            return 1 - t * t
+
+        def _lin(x):
+            return torch.ones_like(x).to(x.device)
+
+        result = {
+            "ReLU": _d_relu,
+            "Sigmoid": _d_sigmoid,
+            "Tanh": _d_tanh,
+            "Linear": _lin,
+        }
+        return result.get(mname, _lin)
 
     def get_next_module(self, mname):
         index = self.module_orders.index(mname)
