@@ -20,6 +20,12 @@ class DistNet:
         self.network_module_map, self.module_orders = self.build_network_module_map()
         super(DistNet, self).__init__()
 
+    def clear(self):
+        self.bandwidth_sent = dict()
+        self.aggregate_grads = dict()
+        self.aggregate_forward = dict()
+        self.aggregate_backward = dict()
+
     def build_network_module_map(self):
         result = dict()
         orders = []
@@ -77,9 +83,12 @@ class DistNet:
         return ys
 
     def backward(self, ys, yhats, loss_class):
+        losses = []
         for y, yhat in zip(ys, yhats):
             loss = loss_class()(yhat, y)
             loss.backward()
+            losses.append(loss)
+        return losses
 
     def aggregate(self):
         for n_i, network in enumerate(self.networks):
