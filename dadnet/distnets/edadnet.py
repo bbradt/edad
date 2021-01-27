@@ -39,7 +39,15 @@ class EdadNet(DistNet):
                 agg_delta = agg_delta[0]
             agg_input_activations = torch.cat(agg_input_activations, 0)
             agg_output_activations = torch.cat(agg_output_activations, 0)
-            agg_grad = agg_delta.t() @ agg_input_activations
+            # agg_grad = torch.zeros_like(seed_module.weight.grad).to(
+            #    seed_module.weight.grad.device
+            # )
+            # batch_size = agg_delta.shape[0]
+            # for i in range(batch_size):
+            #    agg_grad += torch.ger(agg_delta[i, :], agg_input_activations[i, :])
+            # agg_grad /= batch_size
+            # agg_grad /= len(self.networks)
+            agg_grad = (agg_delta.t() @ agg_input_activations) / len(self.networks)
             for n_i, network in enumerate(self.networks):
                 module = self.network_module_map[n_i][seed_mname]
                 weight = None
@@ -60,5 +68,6 @@ class EdadNet(DistNet):
                 for p_i, parameter in enumerate(module.parameters()):
                     try:
                         parameter.grad = agg_grad.clone()
+                        assert (parameter.grad == agg_grad).all()
                     except KeyError:
                         continue

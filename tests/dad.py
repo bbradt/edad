@@ -49,7 +49,7 @@ def run_dad(
     train_data = MnistDataset(train=True)
     test_data = MnistDataset(train=False)
     # train_1, train_2 = random_split(train_data, 2, seed=seed)
-    train_1, train_2 = even_split(train_data, 2)
+    train_1, train_2 = class_split(train_data, 2)
     # train_1 = train_1.to(device)
     # train_2 = train_2.to(device)
     dataloader_1 = torch.utils.data.DataLoader(

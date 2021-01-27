@@ -37,6 +37,17 @@ if __name__ == "__main__":
     y1 = torch.randint(0, 10, (8,))
     x2 = torch.randn(8, 32, 32)
     y2 = torch.randint(0, 10, (8,))
+    xc = torch.cat([x1, x2], 0)
+    yc = torch.cat([y1, y2])
+
+    # Pooled
+    torch.manual_seed(0)
+    model1_pooled = SimpleLinear()
+    torch.manual_seed(0)
+    yhats = model1_pooled(xc)
+    pooled_optim_1 = torch.optim.Adam(model1_pooled.parameters())
+    loss_pooled = nn.CrossEntropyLoss()(yhats, yc)
+    loss_pooled.backward()
 
     # Edad
     torch.manual_seed(0)
@@ -88,6 +99,15 @@ if __name__ == "__main__":
     dsgd_net.backward([y1, y2], yhats, nn.CrossEntropyLoss)
     dsgd_net.aggregate()
     dsgd_net.recompute_gradients()
+
+    def pooled_net_grad_diff(n1, n2):
+        return torch.norm(
+            model1_pooled.fc1.weight.grad
+            - (n1.fc1.weight.grad + n2.fc1.weight.grad) / 2
+        ) + torch.norm(
+            model1_pooled.fc2.weight.grad
+            - (n1.fc2.weight.grad + n2.fc2.weight.grad) / 2
+        )
 
     def net_grad_diff(n1, n2):
         return torch.norm(n1.fc1.weight.grad - n2.fc1.weight.grad) + torch.norm(

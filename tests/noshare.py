@@ -19,7 +19,7 @@ class SimpleLinear(nn.Module):
         super(SimpleLinear, self).__init__()
         self.flatten = Flatten(1)
         self.fc1 = nn.Linear(28 * 28, 128, bias=False)
-        self.relu1 = nn.Tanh()
+        self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(128, 10, bias=False)
         self.hook = ModelHook(
             self,
@@ -40,7 +40,7 @@ def run_noshare(
     lr=1e-3,
     batch_size=32,
     seed=0,
-    epochs=50,
+    epochs=500,
     device="cuda" if torch.cuda.is_available() else "cpu",
 ):
     torch.manual_seed(seed)
@@ -48,7 +48,7 @@ def run_noshare(
     train_data = MnistDataset(train=True)
     test_data = MnistDataset(train=False)
     # train_1, train_2 = random_split(train_data, 2, seed=seed)
-    train_1, train_2 = even_split(train_data, 2)
+    train_1, train_2 = class_split(train_data, 2)
     # train_1 = train_1.to(device)
     # train_2 = train_2.to(device)
     dataloader_1 = torch.utils.data.DataLoader(

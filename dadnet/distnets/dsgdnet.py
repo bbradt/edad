@@ -15,7 +15,8 @@ class DsgdNet(DistNet):
                     try:
                         agg_grad = torch.sum(
                             torch.stack(self.aggregate_grads[mname][p_i], -1), -1
-                        )
+                        ) / len(self.networks)
                         parameter.grad = agg_grad.clone()
+                        assert (parameter.grad == agg_grad).all()
                     except KeyError:
                         continue

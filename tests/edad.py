@@ -21,7 +21,7 @@ class SimpleLinear(nn.Module):
         super(SimpleLinear, self).__init__()
         self.flatten = Flatten(1)
         self.fc1 = nn.Linear(28 * 28, 128, bias=False)
-        self.relu1 = nn.Tanh()
+        self.relu1 = nn.ReLU()
         self.fc2 = nn.Linear(128, 10, bias=False)
         self.hook = ModelHook(
             self,
@@ -42,7 +42,7 @@ def run_edad(
     lr=1e-3,
     batch_size=32,
     seed=0,
-    epochs=50,
+    epochs=500,
     device="cuda" if torch.cuda.is_available() else "cpu",
 ):
     torch.manual_seed(seed)
@@ -50,7 +50,7 @@ def run_edad(
     train_data = MnistDataset(train=True)
     test_data = MnistDataset(train=False)
     # train_1, train_2 = random_split(train_data, 2, seed=seed)
-    train_1, train_2 = even_split(train_data, 2)
+    train_1, train_2 = class_split(train_data, 2)
     # train_1 = train_1.to(device)
     # train_2 = train_2.to(device)
     dataloader_1 = torch.utils.data.DataLoader(
@@ -95,18 +95,15 @@ def run_edad(
             optimizer_1.step()
             optimizer_2.step()
             edad_net.clear()
-
-            # Training
-            yhat_1 = model1(data_1)
-            pred_1 = yhat_1.argmax(dim=1, keepdim=True)
-            correct_1 += pred_1.eq(label_1.view_as(pred_1)).sum().item()
-            totals_1 += len(data_1)
-            yhat_2 = model2(data_2)
-            pred_2 = yhat_2.argmax(dim=1, keepdim=True)
-            correct_2 += pred_2.eq(label_2.view_as(pred_2)).sum().item()
-            totals_2 += len(data_2)
-            # edad_net.aggregate()
-            # edad_net.recompute_gradients()
+            with torch.no_grad():
+                yhat_1 = model1(data_1)
+                pred_1 = yhat_1.argmax(dim=1, keepdim=True)
+                correct_1 += pred_1.eq(label_1.view_as(pred_1)).sum().item()
+                totals_1 += len(data_1)
+                yhat_2 = model2(data_2)
+                pred_2 = yhat_2.argmax(dim=1, keepdim=True)
+                correct_2 += pred_2.eq(label_2.view_as(pred_2)).sum().item()
+                totals_2 += len(data_2)
 
         # Testing
         with torch.no_grad():
