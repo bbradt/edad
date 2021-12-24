@@ -1,0 +1,2 @@
+epoch,mode,lr,batch_size,k,kf,model,dataset,rank,numiterations,train_loss_site_0,test_loss_site_0,train_acc_site_0,test_acc_site_0,val_acc_site_0,test_acc_avg,test_loss_avg,test_acc_ensemble,test_loss_ensemble,val_acc_avg,val_loss_avg,val_acc_ensemble,val_loss_ensemble
+0,pooled,0.0001,8,-1,5,transformer,imdb,8,10,0.7837486267089844,1608.49169921875,0.63232,0.743,0.0,0.0,0.0,0.0,0,0.0,0.0,0.0,0
